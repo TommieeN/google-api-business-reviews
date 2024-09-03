@@ -27,6 +27,7 @@ app.get("/place-details", async (req, res) => {
         text: review.text,
         time: review.relative_time_description,
         profile_photo_url: review.profile_photo_url,
+        google_listing: `https://www.google.com/maps/place/?q=place_id:${placeId}`
     }))
 
     res.json(formattedResponse)
@@ -36,6 +37,6 @@ app.get("/place-details", async (req, res) => {
 }
 });
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`server is running on port ${port}`);
 });
