@@ -1,42 +1,34 @@
 const express = require("express");
-const axios = require("axios");
-const dotenv = require("dotenv")
+const dotenv = require("dotenv");
+const fs = require("fs");
 const app = express();
-const port = process.env.port || 3000;
-const cors = require("cors")
+const port = process.env.PORT || 3000;
+const cors = require("cors");
+dotenv.config();
 
-dotenv.config()
+app.use(cors());
 
-app.use(cors())
-app.get("/place-details", async (req, res) => {
+// Load reviews from reviews.json
+const reviews = JSON.parse(fs.readFileSync("./reviews.json", "utf8"));
+
+app.get("/place-details", (req, res) => {
   try {
-    const apiKey = process.env.GOOGLE_API_KEY
-    const placeId = process.env.PLACE_ID
-    url = `https://maps.googleapis.com/maps/api/place/details/json?fields=reviews&place_id=${placeId}&key=${apiKey}`
-    const response = await axios.get(url)
-    const reviews = response.data.result.reviews;
 
-    // Filter reviews for 5 star ratings and text
-    const fiveStarReviewsWithText = reviews
-    .filter(review => review.rating === 5 && review.text)
-    .sort((a, b) => new Date(b.time) - new Date (a.time))
+    const formattedResponse = reviews.map(review => ({
+      author: review.author_name,
+      rating: Number(review.rating),
+      text: review.text,
+      time: review.time,  
+      profile_photo_url: review.image_url, 
+    }));
 
-    const formattedResponse = fiveStarReviewsWithText.map(review => ({
-        author: review.author_name,
-        rating: review.rating,
-        text: review.text,
-        time: review.relative_time_description,
-        profile_photo_url: review.profile_photo_url,
-        google_listing: `https://www.google.com/maps/place/?q=place_id:${placeId}`
-    }))
-
-    res.json(formattedResponse)
-} catch (error) {
+    res.json(formattedResponse);
+  } catch (error) {
     console.error(error);
-    res.status(500).send("an error occurred while fetching details")
-}
+    res.status(500).send("An error occurred while processing the reviews");
+  }
 });
 
 app.listen(port, "0.0.0.0", () => {
-  console.log(`server is running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
